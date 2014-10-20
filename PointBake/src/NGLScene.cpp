@@ -7,7 +7,7 @@
 #include <ngl/Material.h>
 #include <ngl/NGLInit.h>
 #include <ngl/NGLStream.h>
-#include <ngl/TransformStack.h>
+#include <ngl/Transformation.h>
 #include <ngl/VAOPrimitives.h>
 #include <ngl/ShaderLib.h>
 
