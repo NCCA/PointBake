@@ -145,7 +145,7 @@ class PointBakeExport() :
 		if len(self.selectedObjects) == 0 :
 			cmds.confirmDialog( title='No objects Selected', message='Select a Mesh Object', button=['Ok'], defaultButton='Ok', cancelButton='Ok', dismissString='Ok' )
 		elif len(self.selectedObjects) > 1 :
-			cmds.confirmDialog( title='Select One Object', message='Only One Mesh mat be exported at a time', button=['Ok'], defaultButton='Ok', cancelButton='Ok', dismissString='Ok' )
+			cmds.confirmDialog( title='Select One Object', message='Only One Mesh may be exported at a time', button=['Ok'], defaultButton='Ok', cancelButton='Ok', dismissString='Ok' )
 		# now we have the correct criteria we can proceed with the export
 		else :
 			# get the start and end values for our UI sliders
