@@ -193,7 +193,7 @@ class PointBakeImport() :
 			# first we get the text entered by the user
 			self.m_text = cmds.promptDialog(query=True, text=True)
 			# now get the obj file to import
-				self.m_objFileName=cmds.fileDialog2(caption="Please select obj file to import",fileFilter=basicFilter, fm=1)
+			self.m_objFileName=cmds.fileDialog2(caption="Please select obj file to import",fileFilter="*.obj", fm=1)
 
 			cmds.file(self.m_objFileName,i=True,type="OBJ",ns=self.m_text)
 			# now the xml file
