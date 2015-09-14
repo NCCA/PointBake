@@ -188,14 +188,6 @@ void NGLScene::render()
   loadMatricesToShader();
   m_mesh->draw();
 
-
-<<<<<<< HEAD
-//        // draw the mesh
-//  loadMatricesToShader();
-//  m_mesh->draw();
-=======
->>>>>>> 7d99d09472ce7ec7652c13b7c1ff1a17c727b74a
-
 }
 
 //----------------------------------------------------------------------------------------------------------------------
