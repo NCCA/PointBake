@@ -189,9 +189,9 @@ void NGLScene::render()
   m_mesh->draw();
 
 
-        // draw the mesh
-  loadMatricesToShader();
-  m_mesh->draw();
+//        // draw the mesh
+//  loadMatricesToShader();
+//  m_mesh->draw();
 
 }
 
