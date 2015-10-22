@@ -105,9 +105,9 @@ void NGLScene::initializeGL()
 
   // now pass the modelView and projection values to the shader
   // the shader will use the currently active material and light0 so set them
-  ngl::Material m(ngl::GOLD);
+  ngl::Material m(ngl::STDMAT::GOLD);
   m.loadToShader("material");
-  ngl::Light light(ngl::Vec3(20,20,20),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
+  ngl::Light light(ngl::Vec3(20,20,20),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT);
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
