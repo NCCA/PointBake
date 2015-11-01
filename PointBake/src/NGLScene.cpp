@@ -39,14 +39,12 @@ NGLScene::~NGLScene()
   std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
 }
 
-void NGLScene::resizeGL(int _w, int _h)
+void NGLScene::resizeGL(QResizeEvent *_event)
 {
-
-  // set the viewport for openGL
-  glViewport(0,0,_w,_h);
+  m_width=_event->size().width()*devicePixelRatio();
+  m_height=_event->size().height()*devicePixelRatio();
   // now set the camera size values as the screen size has changed
-  m_cam->setShape(45,(float)_w/_h,0.05,350);
-  update();
+  m_cam.setShape(45.0f,(float)width()/height(),0.05f,350.0f);
 }
 
 
@@ -67,11 +65,11 @@ void NGLScene::initializeGL()
   ngl::Vec3 from(0,0,30);
   ngl::Vec3 to(0,0,0);
   ngl::Vec3 up(0,1,0);
-  m_cam= new ngl::Camera();
-  m_cam->set(from,to,up);
+
+  m_cam.set(from,to,up);
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
-  m_cam->setShape(45,(float)720.0/576.0,0.5,320);
+  m_cam.setShape(45,(float)720.0/576.0,0.5,320);
   // now to load the shader and set the values
   // grab an instance of shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
@@ -111,7 +109,7 @@ void NGLScene::initializeGL()
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
-  ngl::Mat4 iv=m_cam->getViewMatrix();
+  ngl::Mat4 iv=m_cam.getViewMatrix();
   iv.transpose();
   light.setTransform(iv);
   light.setAttenuation(1,0,0);
@@ -121,20 +119,18 @@ void NGLScene::initializeGL()
 
   glEnable(GL_DEPTH_TEST); // for removal of hidden surfaces
   // first we create a mesh from an obj passing in the obj file and textures
-  m_mesh = new ngl::Obj("models/Shark.obj");
+  m_mesh.reset(  new ngl::Obj("models/Shark.obj"));
   // now we need to create this as a VBO so we can draw it
   m_mesh->createVAO();
   std::cout<<"mesh verts"<<m_mesh->getNumVerts()<<"\n";
-  m_animData = new ngl::NCCAPointBake("models/Shark.xml");
+  m_animData.reset(  new ngl::NCCAPointBake("models/Shark.xml"));
   m_animData->setFrame(0);
-  m_animData->attachMesh(m_mesh);
+  m_animData->attachMesh(m_mesh.get());
   m_frame=0;
   // enable multi sampling
   glEnable(GL_MULTISAMPLE);
   m_animTimer=startTimer(8);
   glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-  // as re-size is not explicitly called we need to do this.
-  glViewport(0,0,width(),height());
 }
 
 
@@ -148,8 +144,8 @@ void NGLScene::loadMatricesToShader()
   ngl::Mat3 normalMatrix;
   ngl::Mat4 M;
   M=m_mouseGlobalTX;
-  MV=M*m_cam->getViewMatrix();
-  MVP=MV*m_cam->getProjectionMatrix() ;
+  MV=M*m_cam.getViewMatrix();
+  MVP=MV*m_cam.getProjectionMatrix() ;
   normalMatrix=MV;
   normalMatrix.inverse();
   shader->setShaderParamFromMat4("MV",MV);
@@ -162,8 +158,7 @@ void NGLScene::paintGL()
 {
   // clear the screen and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // Rotation based on the mouse position for our global transform
-  ngl::Transformation trans;
+  glViewport(0,0,m_width,m_height);
   // Rotation based on the mouse position for our global
   // transform
   ngl::Mat4 rotX;

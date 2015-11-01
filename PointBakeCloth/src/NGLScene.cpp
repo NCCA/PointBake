@@ -39,14 +39,12 @@ NGLScene::~NGLScene()
   std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
 }
 
-void NGLScene::resizeGL(int _w, int _h)
+void NGLScene::resizeGL(QResizeEvent *_event)
 {
-
-  // set the viewport for openGL
-  glViewport(0,0,_w,_h);
+  m_width=_event->size().width()*devicePixelRatio();
+  m_height=_event->size().height()*devicePixelRatio();
   // now set the camera size values as the screen size has changed
-  m_cam->setShape(45,(float)_w/_h,0.05,350);
-  update();
+  m_cam.setShape(45.0f,(float)width()/height(),0.05f,350.0f);
 }
 
 
@@ -68,11 +66,10 @@ void NGLScene::initializeGL()
   ngl::Vec3 to(0,0,0);
   ngl::Vec3 up(0,1,0);
 
-  m_cam= new ngl::Camera();
-  m_cam->set(from,to,up);//,ngl::PERSPECTIVE);
+  m_cam.set(from,to,up);//,ngl::PERSPECTIVE);
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
-  m_cam->setShape(45,(float)720.0/576.0,0.5,320);
+  m_cam.setShape(45,(float)720.0/576.0,0.5,320);
   // now to load the shader and set the values
   // grab an instance of shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
@@ -80,13 +77,12 @@ void NGLScene::initializeGL()
   shader->setShaderParam4f("Colour",1,1,1,1);
   glEnable(GL_DEPTH_TEST); // for removal of hidden surfaces
 
-  m_animData = new ngl::NCCAPointBake("models/Cloth.xml");
+  m_animData.reset(  new ngl::NCCAPointBake("models/Cloth.xml"));
   m_animData->setFrame(0);
   m_frame=0;
   // enable multi sampling
   glEnable(GL_MULTISAMPLE);
   m_animTimer=startTimer(18);
-  glViewport(0,0,width(),height());
 }
 
 
@@ -95,8 +91,7 @@ void NGLScene::paintGL()
 {
   // clear the screen and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // Rotation based on the mouse position for our global transform
-  ngl::Transformation trans;
+  glViewport(0,0,m_width,m_height);
   // Rotation based on the mouse position for our global
   // transform
   ngl::Mat4 rotX;
@@ -112,7 +107,7 @@ void NGLScene::paintGL()
   m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
 
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  ngl::Mat4 MVP=m_mouseGlobalTX*m_cam->getVPMatrix();
+  ngl::Mat4 MVP=m_mouseGlobalTX*m_cam.getVPMatrix();
   shader->setShaderParamFromMat4("MVP",MVP);
 
   // draw the mesh
