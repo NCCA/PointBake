@@ -16,9 +16,12 @@ MOC_DIR=moc
 CONFIG-=app_bundle
 # Auto include all .cpp files in the project src directory (can specifiy individually if required)
 SOURCES+= $$PWD/src/NGLScene.cpp    \
+          $$PWD/src/NGLSceneMouseControls.cpp \
 					$$PWD/src/main.cpp
 # same for the .h files
-HEADERS+= $$PWD/include/NGLScene.h
+HEADERS+= $$PWD/include/NGLScene.h \
+          $$PWD/include/WindowParams.h
+
 # and add the include dir into the search path for Qt and make
 INCLUDEPATH +=./include
 # where our exe is going to live (root of project)
@@ -30,22 +33,22 @@ OTHER_FILES+= shaders/*.glsl \
 CONFIG += console
 # note each command you add needs a ; as it will be run as a single line
 # first check if we are shadow building or not easiest way is to check out against current
-!equals(PWD, $${OUT_PWD}){
-	copydata.commands = echo "creating destination dirs" ;
-	# now make a dir
-	copydata.commands += mkdir -p $$OUT_PWD/shaders ;
-	copydata.commands += mkdir -p $$OUT_PWD/models ;
-	copydata.commands += echo "copying files" ;
-	# then copy the files
-	copydata.commands += $(COPY_DIR) $$PWD/shaders/* $$OUT_PWD/shaders/ ;
-	copydata.commands += $(COPY_DIR) $$PWD/models/* $$OUT_PWD/models/ ;
-	# now make sure the first target is built before copy
-	first.depends = $(first) copydata
-	export(first.depends)
-	export(copydata.commands)
-	# now add it as an extra target
-	QMAKE_EXTRA_TARGETS += first copydata
-}
+#!equals(PWD, $${OUT_PWD}){
+#	copydata.commands = echo "creating destination dirs" ;
+#	# now make a dir
+#	copydata.commands += mkdir -p $$OUT_PWD/shaders ;
+#	copydata.commands += mkdir -p $$OUT_PWD/models ;
+#	copydata.commands += echo "copying files" ;
+#	# then copy the files
+#	copydata.commands += $(COPY_DIR) $$PWD/shaders/* $$OUT_PWD/shaders/ ;
+#	copydata.commands += $(COPY_DIR) $$PWD/models/* $$OUT_PWD/models/ ;
+#	# now make sure the first target is built before copy
+#	first.depends = $(first) copydata
+#	export(first.depends)
+#	export(copydata.commands)
+#	# now add it as an extra target
+#	QMAKE_EXTRA_TARGETS += first copydata
+#}
 NGLPATH=$$(NGLDIR)
 isEmpty(NGLPATH){ # note brace must be here
 	message("including $HOME/NGL")
