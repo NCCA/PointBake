@@ -63,7 +63,7 @@ void NGLScene::initializeGL()
   // grab an instance of shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
   (*shader)["nglColourShader"]->use();
-  shader->setShaderParam4f("Colour",1,1,1,1);
+  shader->setUniform("Colour",1.0f,1.0f,1.0f,1.0f);
   glEnable(GL_DEPTH_TEST); // for removal of hidden surfaces
 
   m_animData.reset(  new ngl::NCCAPointBake("models/Cloth.xml"));
@@ -97,7 +97,7 @@ void NGLScene::paintGL()
 
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
   ngl::Mat4 MVP=m_mouseGlobalTX*m_cam.getVPMatrix();
-  shader->setShaderParamFromMat4("MVP",MVP);
+  shader->setUniform("MVP",MVP);
 
   // draw the mesh
   std::vector<ngl::Vec3> mesh = m_animData->getRawDataPointerAtFrame(m_frame);
@@ -141,9 +141,8 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
     update();
 }
 
-void NGLScene::timerEvent(QTimerEvent *_event )
+void NGLScene::timerEvent(QTimerEvent *)
 {
-	NGL_UNUSED(_event);
 	if (m_active == false)
 	{
 		return;

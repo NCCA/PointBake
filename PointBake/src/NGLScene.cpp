@@ -11,15 +11,10 @@
 #include <ngl/VAOPrimitives.h>
 #include <ngl/ShaderLib.h>
 
-
-
-
 NGLScene::NGLScene()
 {
-
   setTitle("ngl::NCCAPointBake demo");
   m_active=true;
-
 }
 
 
@@ -86,7 +81,7 @@ void NGLScene::initializeGL()
   shader->linkProgramObject("Phong");
   // and make it active ready to load values
   (*shader)["Phong"]->use();
-  shader->setShaderParam1i("Normalize",1);
+  shader->setUniform("Normalize",1);
 
   // now pass the modelView and projection values to the shader
   // the shader will use the currently active material and light0 so set them
@@ -135,10 +130,10 @@ void NGLScene::loadMatricesToShader()
   MVP=MV*m_cam.getProjectionMatrix() ;
   normalMatrix=MV;
   normalMatrix.inverse();
-  shader->setShaderParamFromMat4("MV",MV);
-  shader->setShaderParamFromMat4("MVP",MVP);
-  shader->setShaderParamFromMat3("normalMatrix",normalMatrix);
-  shader->setShaderParamFromMat4("M",M);
+  shader->setUniform("MV",MV);
+  shader->setUniform("MVP",MVP);
+  shader->setUniform("normalMatrix",normalMatrix);
+  shader->setUniform("M",M);
 }
 
 void NGLScene::paintGL()
