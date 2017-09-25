@@ -92,9 +92,8 @@ void NGLScene::initializeGL()
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
   ngl::Mat4 iv=m_cam.getViewMatrix();
-  iv.transpose();
+  iv.inverse().transpose();
   light.setTransform(iv);
-  light.setAttenuation(1,0,0);
   light.enable();
   // load these values to the shader as well
   light.loadToShader("light");
@@ -126,10 +125,10 @@ void NGLScene::loadMatricesToShader()
   ngl::Mat3 normalMatrix;
   ngl::Mat4 M;
   M=m_mouseGlobalTX;
-  MV=M*m_cam.getViewMatrix();
-  MVP=MV*m_cam.getProjectionMatrix() ;
+  MV=m_cam.getViewMatrix()*M;
+  MVP=m_cam.getProjectionMatrix()*MV ;
   normalMatrix=MV;
-  normalMatrix.inverse();
+  normalMatrix.inverse().transpose();
   shader->setUniform("MV",MV);
   shader->setUniform("MVP",MVP);
   shader->setUniform("normalMatrix",normalMatrix);

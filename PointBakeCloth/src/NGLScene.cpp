@@ -96,7 +96,7 @@ void NGLScene::paintGL()
   m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
 
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  ngl::Mat4 MVP=m_mouseGlobalTX*m_cam.getVPMatrix();
+  ngl::Mat4 MVP=m_cam.getVPMatrix()*m_mouseGlobalTX;
   shader->setUniform("MVP",MVP);
 
   // draw the mesh
