@@ -2,9 +2,6 @@
 #include <QGuiApplication>
 
 #include "NGLScene.h"
-#include <ngl/Camera.h>
-#include <ngl/Light.h>
-#include <ngl/Material.h>
 #include <ngl/NGLInit.h>
 #include <ngl/NGLStream.h>
 #include <ngl/Transformation.h>
@@ -25,7 +22,7 @@ NGLScene::~NGLScene()
 
 void NGLScene::resizeGL( int _w, int _h )
 {
-  m_cam.setShape( 45.0f, static_cast<float>( _w ) / _h, 0.05f, 350.0f );
+  m_project=ngl::perspective( 45.0f, static_cast<float>( _w ) / _h, 0.05f, 350.0f );
   m_win.width  = static_cast<int>( _w * devicePixelRatio() );
   m_win.height = static_cast<int>( _h * devicePixelRatio() );
 }
@@ -48,10 +45,8 @@ void NGLScene::initializeGL()
   ngl::Vec3 to(0,0,0);
   ngl::Vec3 up(0,1,0);
 
-  m_cam.set(from,to,up);
-  // set the shape using FOV 45 Aspect Ratio based on Width and Height
-  // The final two are near and far clipping planes of 0.5 and 10
-  m_cam.setShape(45,720.0f/576.0f,0.5,320);
+  m_view=ngl::lookAt(from,to,up);
+  m_project=ngl::perspective(45,720.0f/576.0f,0.5f,320.0f);
   // now to load the shader and set the values
   // grab an instance of shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
@@ -61,43 +56,33 @@ void NGLScene::initializeGL()
   shader->attachShader("PhongVertex",ngl::ShaderType::VERTEX);
   shader->attachShader("PhongFragment",ngl::ShaderType::FRAGMENT);
   // attach the source
-  shader->loadShaderSource("PhongVertex","shaders/PhongVert.glsl");
-  shader->loadShaderSource("PhongFragment","shaders/PhongFrag.glsl");
+  shader->loadShaderSource("PhongVertex","shaders/PhongVertex.glsl");
+  shader->loadShaderSource("PhongFragment","shaders/PhongFragment.glsl");
   // compile the shaders
   shader->compileShader("PhongVertex");
   shader->compileShader("PhongFragment");
   // add them to the program
   shader->attachShaderToProgram("Phong","PhongVertex");
   shader->attachShaderToProgram("Phong","PhongFragment");
-  // now bind the shader attributes for most NGL primitives we use the following
-  // layout attribute 0 is the vertex data (x,y,z)
-  shader->bindAttribute("Phong",0,"inVert");
-  // attribute 1 is the UV data u,v (if present)
-  shader->bindAttribute("Phong",1,"inUV");
-  // attribute 2 are the normals x,y,z
-  shader->bindAttribute("Phong",2,"inNormal");
 
   // now we have associated this data we can link the shader
   shader->linkProgramObject("Phong");
   // and make it active ready to load values
   (*shader)["Phong"]->use();
-  shader->setUniform("Normalize",1);
-
-  // now pass the modelView and projection values to the shader
-  // the shader will use the currently active material and light0 so set them
-  ngl::Material m(ngl::STDMAT::GOLD);
-  m.loadToShader("material");
-  ngl::Light light(ngl::Vec3(20,20,20),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT);
-  // now create our light this is done after the camera so we can pass the
-  // transpose of the projection matrix to the light to do correct eye space
-  // transformations
-  ngl::Mat4 iv=m_cam.getViewMatrix();
+  shader->setUniform("Normalize",0);
+  ngl::Vec4 lightPos(20.0f,20.0f,-20.0f,1.0f);
+  ngl::Mat4 iv=m_view;
   iv.inverse().transpose();
-  light.setTransform(iv);
-  light.enable();
-  // load these values to the shader as well
-  light.loadToShader("light");
-
+  shader->setUniform("light.position",lightPos*iv);
+  shader->setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
+  shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+  shader->setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
+  // gold like phong material
+  shader->setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
+  shader->setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
+  shader->setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
+  shader->setUniform("material.shininess",51.2f);
+  shader->setUniform("viewerPos",from);
   glEnable(GL_DEPTH_TEST); // for removal of hidden surfaces
   // first we create a mesh from an obj passing in the obj file and textures
   m_mesh.reset(  new ngl::Obj("models/Shark.obj"));
@@ -125,8 +110,8 @@ void NGLScene::loadMatricesToShader()
   ngl::Mat3 normalMatrix;
   ngl::Mat4 M;
   M=m_mouseGlobalTX;
-  MV=m_cam.getViewMatrix()*M;
-  MVP=m_cam.getProjectionMatrix()*MV ;
+  MV=m_view*M;
+  MVP=m_project*MV ;
   normalMatrix=MV;
   normalMatrix.inverse().transpose();
   shader->setUniform("MV",MV);
@@ -187,7 +172,7 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
     update();
 }
 
-void NGLScene::timerEvent(QTimerEvent *_event )
+void NGLScene::timerEvent(QTimerEvent * )
 {
 	if (m_active == false)
 	{

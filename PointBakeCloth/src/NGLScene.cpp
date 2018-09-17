@@ -2,11 +2,7 @@
 #include <QGuiApplication>
 
 #include "NGLScene.h"
-#include <ngl/Camera.h>
-#include <ngl/AbstractVAO.h>
-#include <ngl/Light.h>
 #include <ngl/Transformation.h>
-#include <ngl/Material.h>
 #include <ngl/NGLInit.h>
 #include <ngl/SimpleVAO.h>
 #include <ngl/VAOPrimitives.h>
@@ -14,25 +10,21 @@
 #include <ngl/ShaderLib.h>
 #include <memory>
 
-
-
 NGLScene::NGLScene()
 {
   setTitle("ngl::NCCAPointBake demo");
-  m_active=true;
-  m_frame=0;
 }
 
 
 NGLScene::~NGLScene()
 {
-  std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
+  ngl::msg->addMessage("Shutting down NGL, removing VAO's and Shaders");
 }
 
 
 void NGLScene::resizeGL( int _w, int _h )
 {
-  m_cam.setShape( 45.0f, static_cast<float>( _w ) / _h, 0.05f, 350.0f );
+  m_project=ngl::perspective(45.0f, static_cast<float>( _w ) / _h, 0.05f, 350.0f );
   m_win.width  = static_cast<int>( _w * devicePixelRatio() );
   m_win.height = static_cast<int>( _h * devicePixelRatio() );
 }
@@ -55,20 +47,16 @@ void NGLScene::initializeGL()
   ngl::Vec3 to(0,0,0);
   ngl::Vec3 up(0,1,0);
 
-  m_cam.set(from,to,up);//,ngl::PERSPECTIVE);
-  // set the shape using FOV 45 Aspect Ratio based on Width and Height
-  // The final two are near and far clipping planes of 0.5 and 10
-  m_cam.setShape(45,720.0f/576.0f,0.5,320);
+  m_view=ngl::lookAt(from,to,up);
+  m_project=ngl::perspective(45.0f,720.0f/576.0f,0.5f,320.0f);
   // now to load the shader and set the values
   // grab an instance of shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  (*shader)["nglColourShader"]->use();
+  (*shader)[ngl::nglColourShader]->use();
   shader->setUniform("Colour",1.0f,1.0f,1.0f,1.0f);
   glEnable(GL_DEPTH_TEST); // for removal of hidden surfaces
-
-  m_animData.reset(  new ngl::NCCAPointBake("models/Cloth.xml"));
+  m_animData.reset( new ngl::NCCAPointBake("models/Cloth.xml"));
   m_animData->setFrame(0);
-  m_frame=0;
   // enable multi sampling
   glEnable(GL_MULTISAMPLE);
   m_animTimer=startTimer(18);
@@ -95,23 +83,24 @@ void NGLScene::paintGL()
   m_mouseGlobalTX.m_m[3][1] = m_modelPos.m_y;
   m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
 
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  ngl::Mat4 MVP=m_cam.getVPMatrix()*m_mouseGlobalTX;
+  auto *shader=ngl::ShaderLib::instance();
+  shader->use(ngl::nglColourShader);
+  ngl::Mat4 MVP=m_project*m_view*m_mouseGlobalTX;
   shader->setUniform("MVP",MVP);
 
   // draw the mesh
   std::vector<ngl::Vec3> mesh = m_animData->getRawDataPointerAtFrame(m_frame);
-  unsigned int size=mesh.size();
+ // ngl::msg->addMessage(fmt::format("frame {0}",m_frame));
+ // ngl::msg->addMessage(fmt::format("data {0} {1} {2} ",mesh[0][0],mesh[0][1],mesh[0][2]));
+  auto size=mesh.size();
   glPointSize(4);
-  std::unique_ptr<ngl::AbstractVAO> vao(ngl::VAOFactory::createVAO("simpleVAO",GL_POINTS));
+  std::unique_ptr<ngl::AbstractVAO> vao(ngl::VAOFactory::createVAO(ngl::simpleVAO,GL_POINTS));
   vao->bind();
-
   vao->setData(ngl::AbstractVAO::VertexData( size*sizeof(ngl::Vec3),mesh[0].m_x));
   vao->setVertexAttributePointer(0,3,GL_FLOAT,sizeof(ngl::Vec3),0);
   vao->setNumIndices(size);
   vao->draw();
   vao->unbind();
-
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -136,9 +125,8 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
 
   default : break;
   }
-  // finally update the GLWindow and re-draw
-  //if (isExposed())
-    update();
+
+  update();
 }
 
 void NGLScene::timerEvent(QTimerEvent *)

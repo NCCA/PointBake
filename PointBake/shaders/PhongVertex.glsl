@@ -1,4 +1,4 @@
-#version 150
+#version 330 core
 /// @brief flag to indicate if model has unit normals if not normalize
 uniform bool Normalize;
 // the eye position of the camera
@@ -6,31 +6,20 @@ uniform vec3 viewerPos;
 /// @brief the current fragment normal for the vert being processed
 out vec3 fragmentNormal;
 /// @brief the vertex passed in
-in vec3 inVert;
+layout(location=0)in vec3 inVert;
 /// @brief the normal passed in
-in vec3 inNormal;
+layout(location=1)in vec3 inNormal;
 /// @brief the in uv
-in vec2 inUV;
-
-struct Materials
-{
-  vec4 ambient;
-  vec4 diffuse;
-  vec4 specular;
-  float shininess;
-};
+layout(location=2)in vec2 inUV;
 
 
 struct Lights
 {
-    vec4 position;
-    vec3 direction;
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+	vec4 position;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
 };
-// our material
-uniform Materials material;
 // array of lights
 uniform Lights light;
 // direction of the lights used for shading
@@ -52,10 +41,7 @@ void main()
 fragmentNormal = (normalMatrix*inNormal);
 
 
-if (Normalize == true)
-{
- fragmentNormal = normalize(fragmentNormal);
-}
+fragmentNormal = normalize(fragmentNormal);
 // calculate the vertex position
 gl_Position = MVP*vec4(inVert,1.0);
 
@@ -76,3 +62,4 @@ lightDir/= dist;
 halfVector = normalize(eyeDirection + lightDir);
 
 }
+

@@ -1,11 +1,10 @@
 #ifndef NGLSCENE_H_
 #define NGLSCENE_H_
-#include <ngl/Camera.h>
+#include <QOpenGLWindow>
 #include <ngl/Obj.h>
 #include <ngl/NCCAPointBake.h>
 #include <ngl/Text.h>
 #include "WindowParams.h"
-#include <QOpenGLWindow>
 #include <memory>
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -61,7 +60,8 @@ private:
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief Our Camera
     //----------------------------------------------------------------------------------------------------------------------
-    ngl::Camera m_cam;
+    ngl::Mat4 m_view;
+    ngl::Mat4 m_project;
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief the model position for mouse movement
     //----------------------------------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ private:
     /// @brief the timer event triggered from the timers
     /// @param _even the event of the timer triggered by Qt
     //----------------------------------------------------------------------------------------------------------------------
-    void timerEvent( QTimerEvent *_event );
+    void timerEvent(QTimerEvent *);
 };
 
 
