@@ -31,7 +31,7 @@ void NGLScene::initializeGL()
 {
   // we must call this first before any other GL commands to load and link the
   // gl commands from the lib, if this is not done program will crash
-  ngl::NGLInit::instance();
+  ngl::NGLInit::initialize();
 
   glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
   // enable depth testing for drawing
@@ -47,49 +47,46 @@ void NGLScene::initializeGL()
 
   m_view=ngl::lookAt(from,to,up);
   m_project=ngl::perspective(45,720.0f/576.0f,0.5f,320.0f);
-  // now to load the shader and set the values
-  // grab an instance of shader manager
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
   // we are creating a shader called Phong
-  shader->createShaderProgram("Phong");
+  ngl::ShaderLib::createShaderProgram("Phong");
   // now we are going to create empty shaders for Frag and Vert
-  shader->attachShader("PhongVertex",ngl::ShaderType::VERTEX);
-  shader->attachShader("PhongFragment",ngl::ShaderType::FRAGMENT);
+  ngl::ShaderLib::attachShader("PhongVertex",ngl::ShaderType::VERTEX);
+  ngl::ShaderLib::attachShader("PhongFragment",ngl::ShaderType::FRAGMENT);
   // attach the source
-  shader->loadShaderSource("PhongVertex","shaders/PhongVertex.glsl");
-  shader->loadShaderSource("PhongFragment","shaders/PhongFragment.glsl");
+  ngl::ShaderLib::loadShaderSource("PhongVertex","shaders/PhongVertex.glsl");
+  ngl::ShaderLib::loadShaderSource("PhongFragment","shaders/PhongFragment.glsl");
   // compile the shaders
-  shader->compileShader("PhongVertex");
-  shader->compileShader("PhongFragment");
+  ngl::ShaderLib::compileShader("PhongVertex");
+  ngl::ShaderLib::compileShader("PhongFragment");
   // add them to the program
-  shader->attachShaderToProgram("Phong","PhongVertex");
-  shader->attachShaderToProgram("Phong","PhongFragment");
+  ngl::ShaderLib::attachShaderToProgram("Phong","PhongVertex");
+  ngl::ShaderLib::attachShaderToProgram("Phong","PhongFragment");
 
   // now we have associated this data we can link the shader
-  shader->linkProgramObject("Phong");
+  ngl::ShaderLib::linkProgramObject("Phong");
   // and make it active ready to load values
-  (*shader)["Phong"]->use();
-  shader->setUniform("Normalize",0);
+  ngl::ShaderLib::use("Phong");
+  ngl::ShaderLib::setUniform("Normalize",0);
   ngl::Vec4 lightPos(20.0f,20.0f,-20.0f,1.0f);
   ngl::Mat4 iv=m_view;
   iv.inverse().transpose();
-  shader->setUniform("light.position",lightPos*iv);
-  shader->setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
-  shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
-  shader->setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
+  ngl::ShaderLib::setUniform("light.position",lightPos*iv);
+  ngl::ShaderLib::setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
+  ngl::ShaderLib::setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+  ngl::ShaderLib::setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
   // gold like phong material
-  shader->setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
-  shader->setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
-  shader->setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
-  shader->setUniform("material.shininess",51.2f);
-  shader->setUniform("viewerPos",from);
+  ngl::ShaderLib::setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
+  ngl::ShaderLib::setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
+  ngl::ShaderLib::setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
+  ngl::ShaderLib::setUniform("material.shininess",51.2f);
+  ngl::ShaderLib::setUniform("viewerPos",from);
   glEnable(GL_DEPTH_TEST); // for removal of hidden surfaces
   // first we create a mesh from an obj passing in the obj file and textures
-  m_mesh.reset(  new ngl::Obj("models/Shark.obj"));
+  m_mesh=std::make_unique< ngl::Obj>("models/Shark.obj");
   // now we need to create this as a VBO so we can draw it
   m_mesh->createVAO();
   std::cout<<"mesh verts"<<m_mesh->getNumVerts()<<"\n";
-  m_animData.reset(  new ngl::NCCAPointBake("models/Shark.xml"));
+  m_animData = std::make_unique<  ngl::NCCAPointBake>("models/Shark.xml");
   m_animData->setFrame(0);
   m_animData->attachMesh(m_mesh.get());
   m_frame=0;
@@ -102,9 +99,7 @@ void NGLScene::initializeGL()
 
 void NGLScene::loadMatricesToShader()
 {
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  (*shader)["Phong"]->use();
-
+  ngl::ShaderLib::use("Phong");
   ngl::Mat4 MV;
   ngl::Mat4 MVP;
   ngl::Mat3 normalMatrix;
@@ -114,10 +109,10 @@ void NGLScene::loadMatricesToShader()
   MVP=m_project*MV ;
   normalMatrix=MV;
   normalMatrix.inverse().transpose();
-  shader->setUniform("MV",MV);
-  shader->setUniform("MVP",MVP);
-  shader->setUniform("normalMatrix",normalMatrix);
-  shader->setUniform("M",M);
+  ngl::ShaderLib::setUniform("MV",MV);
+  ngl::ShaderLib::setUniform("MVP",MVP);
+  ngl::ShaderLib::setUniform("normalMatrix",normalMatrix);
+  ngl::ShaderLib::setUniform("M",M);
 }
 
 void NGLScene::paintGL()
