@@ -39,15 +39,15 @@ data is exported as a clip file once loaded as this will be more efficient.
 
 ########################################################################################################################
 ##  @brief a basic function to return a file name / absolute path stripping off $HIP etc
-##	@param[in] _title the title to be displayed in the file box
-##  @param[in] _wildCard the file selection wildcard i.e. *.obj etc
-##  @param[in] _fileType the houdini file type option e.g. hou.fileType.Any
+##	@param[in] title the title to be displayed in the file box
+##  @param[in] wildCard the file selection wildcard i.e. *.obj etc
+##  @param[in] fileType the houdini file type option e.g. hou.fileType.Any
 ##  @returns a fully qualified file path or None
 ########################################################################################################################
 
-def GetAbsoluteFileName(_title,_wildCard,_fileType) :
+def GetAbsoluteFileName(title,wildCard,fileType) :
 	# launch a file select and get the data
-	file=hou.ui.selectFile(None,_title,False,_fileType,_wildCard)
+	file=hou.ui.selectFile(None,title,False,fileType,wildCard)
 	# if it was empty bomb out and return none
 	if file =="" :
 		return None
@@ -81,102 +81,103 @@ class ParseHandler(xml.sax.ContentHandler):
 
 	## @brief ctor for the class passing in the houdini channel we wish to load the
 	## PB data into
-	## @param[in] _chan the channel that the parsed xml data should be loaded too
-	def __init__(self,_chan):
+	## @param[in] chan the channel that the parsed xml data should be loaded too
+	def init(self,chan):
 		## @brief the Character Data stored as part of parsing
-		self.m_charData=""
-		## @brief the m_meshName extracted from the PointBake file
-		self.m_meshName=""
+		self.mcharData=""
+		## @brief the mmeshName extracted from the PointBake file
+		self.mmeshName=""
 		## @brief number of vertices in the mesh, we will check this against the number of points in
 		## the mesh / obj loaded as a basic compatibility check
-		self.m_numVerts=0
+		self.mnumVerts=0
 		## @brief the Start frame for the data loaded
-		self.m_startFrame=0
-		## @brief m_endFrame of the data loaded
-		self.m_endFrame=0
+		self.mstartFrame=0
+		## @brief mendFrame of the data loaded
+		self.mendFrame=0
 		## @brief number of frames stored in file not used in this example
-		self.m_numFrames=0
+		self.mnumFrames=0
 		## @brief the Channel used for assigning the data from the xml file passed to the parser
 		## when constructed
-		self.m_channel=_chan
+		self.mchannel=chan
 		## @brief the Offset into the vertex list for the current data to be set too
-		self.m_offset=None
+		self.moffset=None
 		## @brief the Current frame to be stored / keyed
-		self.m_currentFrame=0
+		self.mcurrentFrame=0
 
 
-	def __del__(self) :
+	def del(self) :
 		hou.ui.setStatusMessage("Finished Import",hou.severityType.Message)
+
 	## @brief here we trigger events for the start elements In this case we grab the Offset and Frame
-	## @param[in] _name the name of the tag to process
-	## @param[in] _attrs the attribute associated with the current tag
-	def startElement(self, _name, _attrs):
+	## @param[in] name the name of the tag to process
+	## @param[in] attrs the attribute associated with the current tag
+	def startElement(self, name, attrs):
 		# this is important the characters method may be called many times so we
 		# clear the char data each start element then append each time we read it
-		self.m_charData=""
+		self.mcharData=""
 		# if we have a vertex start tag process and extract the offset
-		if _name == "Vertex" :
-			self.m_offset=int(_attrs.get("number"))
+		if name == "Vertex" :
+			self.moffset=int(attrs.get("number"))
 		# if we have the Frame we grab the number attribute
-		elif _name == "Frame" :
-			hou.setFrame(int(_attrs.get("number")))
-			self.m_currentFrame=int(_attrs.get("number"))
+		elif name == "Frame" :
+			hou.setFrame(int(attrs.get("number")))
+			self.mcurrentFrame=int(attrs.get("number"))
 
-	## @brief trigger method if we have data between the <> </> tags, copy it to the class m_charData so
+	## @brief trigger method if we have data between the <> </> tags, copy it to the class mcharData so
 	## we can re-use it later
-	## \param[in] _content the character string passed from the parser.
-	def characters(self,_content):
+	## \param[in] content the character string passed from the parser.
+	def characters(self,content):
 		# here we append the content data passed into the method, we need to append
 		# as this function may be called more than once if we have a long string
-		self.m_charData += _content
+		self.mcharData += content
 
 	## @brief most of the hard processing is done here. Once an end tag is encountered we
 	## process the current char data and add it to the channel created. This does
 	## rely on the order of the data but this is always machine generated so we should
 	## be safe if it does go wrong it will be this data ordering
-	## @brief[in] _name the name of the end element tag
-	def endElement(self, _name):
-		# extract the m_meshName and save it
-		if _name == "MeshName":
-			self.m_meshName=self.m_charData
+	## @brief[in] name the name of the end element tag
+	def endElement(self, name):
+		# extract the mmeshName and save it
+		if name == "MeshName":
+			self.mmeshName=self.mcharData
 		# get the number of vertices and set this to the channel
-		elif _name == "NumVerts" :
+		elif name == "NumVerts" :
 			# store value
-			self.m_numVerts=int(self.m_charData)
+			self.mnumVerts=int(self.mcharData)
 
 			# now set the Channel to have this number of channels (may be large)
-			self.m_channel.parm("numchannels").set(self.m_numVerts)
+			self.mchannel.parm("numchannels").set(self.mnumVerts)
 			# now we traverse all the elements and re-size to 3 and rename the data to a translate
 			# we need to change this later for other attribute types (rot etc etc)
-			for i in range(0,self.m_numVerts) :
+			for i in range(0,self.mnumVerts) :
 				channel.parm("size%d" %(i)).set(3)
 				channel.parm("name%d" %(i)).set("t")
-		# parse and sel the m_startFrame
-		elif _name == "StartFrame" :
-			self.m_startFrame=int(self.m_charData)
-			self.m_channel.parm("start").set(self.m_startFrame)
+		# parse and sel the mstartFrame
+		elif name == "StartFrame" :
+			self.mstartFrame=int(self.mcharData)
+			self.mchannel.parm("start").set(self.mstartFrame)
 		## found an end frame value
-		elif _name == "EndFrame" :
-			self.m_endFrame=int(self.m_charData)
-			self.m_channel.parm("end").set(self.m_endFrame)
+		elif name == "EndFrame" :
+			self.mendFrame=int(self.mcharData)
+			self.mchannel.parm("end").set(self.mendFrame)
 		## found the number of frames
-		elif _name == "NumFrames" :
-			self.m_numFrames=int(self.m_charData)
+		elif name == "NumFrames" :
+			self.mnumFrames=int(self.mcharData)
 		## found the vertex
-		elif _name =="Vertex" :
-			hou.ui.setStatusMessage("Processing Frame %d channel %d" %(self.m_currentFrame,self.m_offset),hou.severityType.Message)
-			self.m_charData=self.m_charData.strip()
-			data=self.m_charData.split(" ")
+		elif name =="Vertex" :
+			hou.ui.setStatusMessage("Processing Frame %d channel %d" %(self.mcurrentFrame,self.moffset),hou.severityType.Message)
+			self.mcharData=self.mcharData.strip()
+			data=self.mcharData.split(" ")
 			## now we check to see if there are enough values to parse
 			if len(data) == 3 :
-				hou_parm_tuple = self.m_channel.parmTuple("value%d" %(self.m_offset))
-				hou_keyframe = hou.Keyframe()
-				hou_keyframe.setExpression(str(data[0]), hou.exprLanguage.Hscript)
-				hou_parm_tuple[0].setKeyframe(hou_keyframe)
-				hou_keyframe.setExpression(str(data[1]), hou.exprLanguage.Hscript)
-				hou_parm_tuple[1].setKeyframe(hou_keyframe)
-				hou_keyframe.setExpression(str(data[2]), hou.exprLanguage.Hscript)
-				hou_parm_tuple[2].setKeyframe(hou_keyframe)
+				houparmtuple = self.mchannel.parmTuple("value%d" %(self.moffset))
+				houkeyframe = hou.Keyframe()
+				houkeyframe.setExpression(str(data[0]), hou.exprLanguage.Hscript)
+				houparmtuple[0].setKeyframe(houkeyframe)
+				houkeyframe.setExpression(str(data[1]), hou.exprLanguage.Hscript)
+				houparmtuple[1].setKeyframe(houkeyframe)
+				houkeyframe.setExpression(str(data[2]), hou.exprLanguage.Hscript)
+				houparmtuple[2].setKeyframe(houkeyframe)
 
 
 objectFile=GetAbsoluteFileName("Select Object File","*.obj",hou.fileType.Geometry)
@@ -220,6 +221,6 @@ geoChan.parm("method").set(1)
 geoChan.setFirstInput(file)
 geoChan.setDisplayFlag(True)
 
-parser = xml.sax.make_parser()
+parser = xml.sax.makeparser()
 parser.setContentHandler(ParseHandler(channel))
 parser.parse(open(bakeFile,"r"))
